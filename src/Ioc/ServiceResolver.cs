@@ -41,6 +41,10 @@ internal class ServiceResolver(IDictionary<Type, RegistrationPolicy> types) : IS
         if (!_types.ContainsKey(type))
             throw new NullReferenceException($"Cannot resolve instance of type {type}");
 
+        var policy = _types[type];
+        if (policy == RegistrationPolicy.Transient)
+            return CreateInstance(type);
+
         if (_instances.TryGetValue(type, out var instance))
         {
             return instance;

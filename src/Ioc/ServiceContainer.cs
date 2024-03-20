@@ -17,6 +17,21 @@ public class ServiceContainer : IServiceContainer
         _types.Add(typeof(TService), RegistrationPolicy.Singleton);
     }
 
+    public void AddTransient<TService>()
+    {
+        _types.Add(typeof(TService), RegistrationPolicy.Transient);
+    }
+
+    public void AddTransient<TService>(TService instance) where TService : class
+    {
+        _types.Add(typeof(TService), RegistrationPolicy.Transient);
+    }
+
+    public void AddTransient<TService, TImplementation>() where TImplementation : TService
+    {
+        _types.Add(typeof(TService), RegistrationPolicy.Transient);
+    }
+
     public IServiceResolver GetProvider()
     {
         return new ServiceResolver(_types);

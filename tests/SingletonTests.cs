@@ -1,8 +1,9 @@
 using Ioc;
+using tests.Fakes;
 
 namespace tests;
 
-public class Tests
+public class SingletonTests
 {
     [Fact]
     public void AddSingleton_RegistersAnInstanceOfTheRequestedService()
@@ -60,21 +61,4 @@ public class Tests
         Assert.Equal(moq.Id, bar.Moq.Id);
         Assert.Equal(moq.Id, bar.Foo.Moq.Id);
     }
-}
-
-public class Moq
-{
-    public Guid Id { get; } = Guid.NewGuid();
-}
-
-public class FooMoq(Moq moq)
-{
-    public Moq Moq { get; set; } = moq;
-}
-
-public class BarMoq(Moq moq, FooMoq foo, int number)
-{
-    public FooMoq Foo { get; set; } = foo;
-    public int Number { get; set; } = number;
-    public Moq Moq { get; set; } = moq;
 }
