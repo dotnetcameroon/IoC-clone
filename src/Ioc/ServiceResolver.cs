@@ -1,8 +1,8 @@
 namespace Ioc;
 
-internal class ServiceResolver(IDictionary<Type, RegistrationPolicy> types) : IServiceResolver
+internal class ServiceResolver(IDictionary<Type, (RegistrationPolicy,Func<IServiceResolver, object>?)> types) : IServiceResolver
 {
-    private readonly IDictionary<Type, RegistrationPolicy> _types = types;
+    private readonly IDictionary<Type, (RegistrationPolicy policy,Func<IServiceResolver, object>? generate)> _typesMap = types;
     private readonly Dictionary<Type, object> _instances = [];
 
     public T GetRequiredService<T>() where T : class
@@ -38,19 +38,24 @@ internal class ServiceResolver(IDictionary<Type, RegistrationPolicy> types) : IS
 
     private object GetRequiredService(Type type)
     {
-        if (!_types.ContainsKey(type))
+        if (!_typesMap.TryGetValue(type, out var value))
             throw new NullReferenceException($"Cannot resolve instance of type {type}");
 
-        var policy = _types[type];
-        if (policy == RegistrationPolicy.Transient)
-            return CreateInstance(type);
+        var policy = value;
+        if (policy.policy == RegistrationPolicy.Transient)
+        {
+            if (policy.generate is null)
+                return CreateInstance(type);
+            else
+                return policy.generate(this);
+        }
 
         if (_instances.TryGetValue(type, out var instance))
         {
             return instance;
         }
 
-        instance = CreateInstance(type);
+        instance = policy.generate is null ? CreateInstance(type) : policy.generate(this);
         _instances[type] = instance!;
         return instance!;
     }

@@ -61,4 +61,29 @@ public class SingletonTests
         Assert.Equal(moq.Id, bar.Moq.Id);
         Assert.Equal(moq.Id, bar.Foo.Moq.Id);
     }
+
+    [Fact]
+    public void GetRequiredService_WhitGenerateDelegateReturnsAnInstanceOfTheRequestedServiceWithItsDependencies()
+    {
+        IServiceContainer collection = new ServiceContainer();
+        collection.AddSingleton<Moq>();
+        collection.AddSingleton(sr =>
+        {
+            var moq = sr.GetRequiredService<Moq>();
+            var foo = sr.GetRequiredService<FooMoq>();
+            return new BarMoq(moq, foo, 100);
+        });
+        collection.AddSingleton(sr =>
+        {
+            var moq = sr.GetRequiredService<Moq>();
+            return new FooMoq(moq);
+        });
+
+        var provider = collection.GetProvider();
+        var foo = provider.GetRequiredService<FooMoq>();
+        var bar = provider.GetRequiredService<BarMoq>();
+        var moq = provider.GetRequiredService<Moq>();
+
+        Assert.Equal(100, bar.Number);
+    }
 }
