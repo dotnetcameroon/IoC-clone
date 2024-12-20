@@ -1,8 +1,8 @@
 namespace Ioc;
 
-internal class ServiceResolver(IDictionary<Type, (RegistrationPolicy, Func<IServiceResolver, object>?)> types) : IServiceResolver
+internal class ServiceResolver(IDictionary<Type, (RegistrationPolicy policy, Func<IServiceResolver, object>? factory)> typesMap) : IServiceResolver
 {
-    private readonly IDictionary<Type, (RegistrationPolicy policy,Func<IServiceResolver, object>? generate)> _typesMap = types;
+    private readonly IDictionary<Type, (RegistrationPolicy policy,Func<IServiceResolver, object>? factory)> _typesMap = typesMap;
     private readonly Dictionary<Type, object> _instances = [];
     private readonly IServiceScope? _scope;
 
@@ -59,7 +59,7 @@ internal class ServiceResolver(IDictionary<Type, (RegistrationPolicy, Func<IServ
         };
     }
 
-    private object RetrieveSingletonInstance((RegistrationPolicy policy, Func<IServiceResolver, object>? generate) policy, Type type)
+    private object RetrieveSingletonInstance((RegistrationPolicy policy, Func<IServiceResolver, object>? factory) policy, Type type)
     {
         /*
         Singleton
@@ -71,12 +71,12 @@ internal class ServiceResolver(IDictionary<Type, (RegistrationPolicy, Func<IServ
             return instance;
         }
 
-        instance = policy.generate is null ? CreateInstance(type) : policy.generate(this);
+        instance = policy.factory is null ? CreateInstance(type) : policy.factory(this);
         _instances[type] = instance!;
         return instance!;
     }
 
-    private object RetrieveScopedInstance((RegistrationPolicy policy, Func<IServiceResolver, object>? generate) policy, Type type)
+    private object RetrieveScopedInstance((RegistrationPolicy policy, Func<IServiceResolver, object>? factory) policy, Type type)
     {
         /*
         Scoped
@@ -90,22 +90,22 @@ internal class ServiceResolver(IDictionary<Type, (RegistrationPolicy, Func<IServ
         if (scopedInstance is not null)
             return scopedInstance;
 
-        scopedInstance = policy.generate is null ? CreateInstance(type) : policy.generate(this);
+        scopedInstance = policy.factory is null ? CreateInstance(type) : policy.factory(this);
         _scope.AddService(type, scopedInstance);
         return scopedInstance;
     }
 
-    private object RetrieveTransientInstance((RegistrationPolicy policy, Func<IServiceResolver, object>? generate) policy, Type type)
+    private object RetrieveTransientInstance((RegistrationPolicy policy, Func<IServiceResolver, object>? factory) policy, Type type)
     {
         /*
         Transient
-            Generate delegate ? use it
-            else: Generate from the DI container
+            factory delegate ? use it
+            else: factory from the DI container
         */
-        if (policy.generate is null)
+        if (policy.factory is null)
             return CreateInstance(type);
         else
-            return policy.generate(this);
+            return policy.factory(this);
     }
 
     private object CreateInstance(Type type)
