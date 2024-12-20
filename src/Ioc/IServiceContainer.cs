@@ -14,6 +14,9 @@ public interface IServiceContainer
     void AddTransient<TService>(TService instance) where TService : class;
     void AddTransient<TService, TImplementation>() where TImplementation : TService;
 
+    void AddScoped<TService>() where TService : class;
+    void AddScoped<TService>(TService instance) where TService : class;
+    void AddScoped<TService, TImplementation>() where TImplementation : TService;
 
     IServiceResolver GetProvider();
 }
