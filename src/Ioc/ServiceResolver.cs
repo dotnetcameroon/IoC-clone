@@ -84,7 +84,7 @@ internal class ServiceResolver(IDictionary<Type, (RegistrationPolicy, Func<IServ
             else: Create a new instance and store it in the scope
         */
         if (_scope is null)
-            throw new NullReferenceException("Cannot resolve scoped instance without a scope");
+            throw new InvalidOperationException("Cannot resolve scoped instance without a scope");
 
         var scopedInstance = _scope.GetService(type);
         if (scopedInstance is not null)

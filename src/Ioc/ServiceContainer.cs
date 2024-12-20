@@ -5,7 +5,7 @@ public partial class ServiceContainer : IServiceContainer
 
     public ServiceScope CreateScope()
     {
-        return new ServiceScope();
+        return new ServiceScope(this);
     }
 
     public IServiceResolver GetProvider()
