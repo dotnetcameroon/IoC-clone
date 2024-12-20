@@ -16,18 +16,18 @@ public partial class ServiceContainer : IServiceContainer
         _typesMap.Add(typeof(TService), (RegistrationPolicy.Scoped, null));
     }
 
-    public void AddScoped<TService>(TService instance, Func<IServiceResolver, TService> generate) where TService : class
+    public void AddScoped<TService>(TService instance, Func<IServiceResolver, TService> factory) where TService : class
     {
-        _typesMap.Add(typeof(TService), (RegistrationPolicy.Scoped, generate));
+        _typesMap.Add(typeof(TService), (RegistrationPolicy.Scoped, factory));
     }
 
-    public void AddScoped<TService>(Func<IServiceResolver, TService> generate) where TService : class
+    public void AddScoped<TService>(Func<IServiceResolver, TService> factory) where TService : class
     {
-        _typesMap.Add(typeof(TService), (RegistrationPolicy.Scoped, generate));
+        _typesMap.Add(typeof(TService), (RegistrationPolicy.Scoped, factory));
     }
 
-    public void AddScoped<TService, TImplementation>(Func<IServiceResolver, TService> generate) where TImplementation : TService where TService : class
+    public void AddScoped<TService, TImplementation>(Func<IServiceResolver, TService> factory) where TImplementation : TService where TService : class
     {
-        _typesMap.Add(typeof(TService), (RegistrationPolicy.Scoped, generate));
+        _typesMap.Add(typeof(TService), (RegistrationPolicy.Scoped, factory));
     }
 }

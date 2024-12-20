@@ -16,18 +16,18 @@ public partial class ServiceContainer : IServiceContainer
         _typesMap.Add(typeof(TService), (RegistrationPolicy.Singleton, null));
     }
 
-    public void AddSingleton<TService>(TService instance, Func<IServiceResolver, TService> generate) where TService : class
+    public void AddSingleton<TService>(TService instance, Func<IServiceResolver, TService> factory) where TService : class
     {
-        _typesMap.Add(typeof(TService), (RegistrationPolicy.Singleton, generate));
+        _typesMap.Add(typeof(TService), (RegistrationPolicy.Singleton, factory));
     }
 
-    public void AddSingleton<TService>(Func<IServiceResolver, TService> generate) where TService : class
+    public void AddSingleton<TService>(Func<IServiceResolver, TService> factory) where TService : class
     {
-        _typesMap.Add(typeof(TService), (RegistrationPolicy.Singleton, generate));
+        _typesMap.Add(typeof(TService), (RegistrationPolicy.Singleton, factory));
     }
 
-    public void AddSingleton<TService, TImplementation>(Func<IServiceResolver, TService> generate) where TImplementation : TService where TService : class
+    public void AddSingleton<TService, TImplementation>(Func<IServiceResolver, TService> factory) where TImplementation : TService where TService : class
     {
-        _typesMap.Add(typeof(TService), (RegistrationPolicy.Singleton, generate));
+        _typesMap.Add(typeof(TService), (RegistrationPolicy.Singleton, factory));
     }
 }
