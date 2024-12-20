@@ -1,9 +1,17 @@
 namespace Ioc;
 
-internal class ServiceResolver(IDictionary<Type, (RegistrationPolicy,Func<IServiceResolver, object>?)> types) : IServiceResolver
+internal class ServiceResolver(IDictionary<Type, (RegistrationPolicy policy, Func<IServiceResolver, object>? factory)> typesMap) : IServiceResolver
 {
-    private readonly IDictionary<Type, (RegistrationPolicy policy,Func<IServiceResolver, object>? generate)> _typesMap = types;
+    private readonly IDictionary<Type, (RegistrationPolicy policy,Func<IServiceResolver, object>? factory)> _typesMap = typesMap;
     private readonly Dictionary<Type, object> _instances = [];
+    private readonly IServiceScope? _scope;
+
+    public ServiceResolver(
+        IDictionary<Type, (RegistrationPolicy, Func<IServiceResolver, object>?)> types,
+        IServiceScope scope) : this(types)
+    {
+        _scope = scope;
+    }
 
     public T GetRequiredService<T>() where T : class
     {
@@ -42,22 +50,62 @@ internal class ServiceResolver(IDictionary<Type, (RegistrationPolicy,Func<IServi
             throw new NullReferenceException($"Cannot resolve instance of type {type}");
 
         var policy = value;
-        if (policy.policy == RegistrationPolicy.Transient)
+        return policy.policy switch
         {
-            if (policy.generate is null)
-                return CreateInstance(type);
-            else
-                return policy.generate(this);
-        }
+            RegistrationPolicy.Transient => RetrieveTransientInstance(policy, type),
+            RegistrationPolicy.Scoped => RetrieveScopedInstance(policy, type),
+            RegistrationPolicy.Singleton => RetrieveSingletonInstance(policy, type),
+            _ => throw new NotSupportedException($"Policy {policy.policy} is not supported")
+        };
+    }
 
+    private object RetrieveSingletonInstance((RegistrationPolicy policy, Func<IServiceResolver, object>? factory) policy, Type type)
+    {
+        /*
+        Singleton
+            If the instance is already created, return it
+            else: Create a new instance and store it in the container
+        */
         if (_instances.TryGetValue(type, out var instance))
         {
             return instance;
         }
 
-        instance = policy.generate is null ? CreateInstance(type) : policy.generate(this);
+        instance = policy.factory is null ? CreateInstance(type) : policy.factory(this);
         _instances[type] = instance!;
         return instance!;
+    }
+
+    private object RetrieveScopedInstance((RegistrationPolicy policy, Func<IServiceResolver, object>? factory) policy, Type type)
+    {
+        /*
+        Scoped
+            If the instance is already created inside the scope, return it
+            else: Create a new instance and store it in the scope
+        */
+        if (_scope is null)
+            throw new InvalidOperationException("Cannot resolve scoped instance without a scope");
+
+        var scopedInstance = _scope.GetService(type);
+        if (scopedInstance is not null)
+            return scopedInstance;
+
+        scopedInstance = policy.factory is null ? CreateInstance(type) : policy.factory(this);
+        _scope.AddService(type, scopedInstance);
+        return scopedInstance;
+    }
+
+    private object RetrieveTransientInstance((RegistrationPolicy policy, Func<IServiceResolver, object>? factory) policy, Type type)
+    {
+        /*
+        Transient
+            factory delegate ? use it
+            else: factory from the DI container
+        */
+        if (policy.factory is null)
+            return CreateInstance(type);
+        else
+            return policy.factory(this);
     }
 
     private object CreateInstance(Type type)

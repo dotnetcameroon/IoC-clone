@@ -3,5 +3,6 @@ namespace Ioc;
 public enum RegistrationPolicy
 {
     Singleton,
-    Transient
+    Transient,
+    Scoped
 }
